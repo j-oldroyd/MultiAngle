@@ -1,13 +1,11 @@
 import numpy as np
+import numpy.typing as npt
 from numpy import linalg as LA
 
 import networkx as nx
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-
-# TODO: Need to fix matrix rank in synthesis computation. Rank is larger than
-# it should be!
 
 
 def mb_etf(d):
@@ -16,13 +14,50 @@ def mb_etf(d):
     return get_synthesis(G)
 
 
-def get_synthesis(G):
-    """Convert Gram matrix to synthesis matrix."""
+def get_synthesis(G, tol=1e-6):
+    r"""Convert a Gram matrix to synthesis matrix.
+
+    Given a Gram matrix $G$, this function returns a corresponding
+    synthesis matrix $F$ using diagonalization.  The matrix $F$ will
+    be a matrix satisfying $F^T F = G$.  In general, there are always
+    infinitely many such $F$ depending on how the diagonalization is
+    carried out, but all such matrices will be unitarily equivalent to
+    each other.
+
+    Arguments:
+
+        G: An $n\times n$ positive semi-definite matrix of rank $d$
+        represented as an ndarray.
+
+        tol: A tolerance setting for rounding eigenvalues to zero.
+
+    Returns:
+
+        F: A $d\times N$ synthesis matrix with Gram matrix $G$,
+        represented as an ndarray.
+
+    """
+    if type(G) is not np.ndarray:
+        try:
+            G = np.array(G, dtype=float)
+        except ValueError:
+            print("G must be a NumPy array or an array-like of floats.")
+            raise
+
+    if G.shape[0] is not G.shape[1]:
+        raise ValueError("G must be a square array.")
+
     N = G.shape[0]
     d = LA.matrix_rank(G)
+
     D, U = LA.eigh(G)
-    D = np.diag(D)  # convert eigenvalue array to diagonal matrix
+    D[np.abs(D) < tol] = 0
+    if np.min(D) < 0:
+        raise ValueError("G must be positive semi-definite.")
+
+    D = np.diag(D)
     F = U @ np.sqrt(D)
+
     return F[:, (N-d):].T
 
 
