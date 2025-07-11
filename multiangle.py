@@ -10,18 +10,20 @@ import matplotlib.colors as mcolors
 # it should be!
 
 
-def mb_etf(n, d):
+def mb_etf(d):
     """Construct the (N, d) Mercedes-Benz ETF."""
-    G = (d + 1) / d * np.eye(n) - (1 / d) * np.ones(n)
+    G = (d + 1)/d * np.eye(d + 1) - (1/d) * np.ones(d + 1)
     return get_synthesis(G)
 
 
 def get_synthesis(G):
     """Convert Gram matrix to synthesis matrix."""
+    N = G.shape[0]
+    d = LA.matrix_rank(G)
     D, U = LA.eigh(G)
     D = np.diag(D)  # convert eigenvalue array to diagonal matrix
     F = U @ np.sqrt(D)
-    return F[:, LA.matrix_rank(G) - 1:].T
+    return F[:, (N-d):].T
 
 
 class MultiAngle:
