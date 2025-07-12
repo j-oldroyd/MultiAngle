@@ -89,19 +89,19 @@ class MultiAngle:
 
         if synthesis_mat is False:
             self.gram = mat
-            self.synthesis = get_synthesis(mat)
+            self.synthesis_matrix = get_synthesis(mat)
         else:
-            self.synthesis = mat
-            self.gram = self.synthesis.T @ self.synthesis
+            self.synthesis_matrix = mat
+            self.gram = self.synthesis_matrix.T @ self.synthesis_matrix
 
-        self.analysis = self.synthesis.T
-        self.frame_matrix = self.synthesis @ self.synthesis.T
+        self.analysis = self.synthesis_matrix.T
+        self.frame_matrix = self.synthesis_matrix @ self.synthesis_matrix.T
         self.frame_bounds = []
         self.max_coherence = np.abs(np.triu(self.gram, k=1)).max()
 
     def get_angles(self):
         """Get list of angles from MultiAngle object."""
-        # Get unique upper triangular matrices.
+
         angles = \
             np.unique(self.gram[np.triu_indices(np.shape(self.gram)[0], 1)])
         return angles
