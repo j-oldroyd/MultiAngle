@@ -64,20 +64,27 @@ def get_synthesis(G, tol=1e-6):
 class MultiAngle:
     """A class for creating and working with multiangle tight frames."""
 
-    def __init__(self, mat, synthesis_mat=False):
+    def __init__(self, mat=None, synthesis_mat=False):
         """Initialize instance of a MultiAngle object.
 
         MultiAngle objects represent frames of N vectors in R^d. The default
         representative is chosen to be the Gram matrix of the frame since this
         is invariant under orthogonal transformations. The object can also be
         initialized with a synthesis matrix instead.
-        Keywork argument:
-        synthesis_mat: boolean. Use synthesis matrix instead of a Gram matrix.
+
+        Keyword arguments:
+
+            synthesis_mat: boolean. Use synthesis matrix instead of a
+            Gram matrix.
+
         """
+        if mat is None:
+            mat = 3/2 * np.eye(3) - 1/2 * np.ones(3)
+
         self.matrix = mat
         self.kwds = synthesis_mat
 
-        self.num_vectors = np.shape(mat)[1]  # cols of gram/synthesis
+        self.num_vectors = mat.shape[1]
         self.dim = LA.matrix_rank(mat)
 
         if synthesis_mat is False:
@@ -87,17 +94,16 @@ class MultiAngle:
             self.synthesis = mat
             self.gram = self.synthesis.T @ self.synthesis
 
-        self.frame_operator = self.synthesis @ self.synthesis.T
-
+        self.analysis = self.synthesis.T
+        self.frame_matrix = self.synthesis @ self.synthesis.T
         self.frame_bounds = []
-
         self.max_coherence = np.abs(np.triu(self.gram, k=1)).max()
 
     def get_angles(self):
         """Get list of angles from MultiAngle object."""
         # Get unique upper triangular matrices.
-        angles = np.unique(
-            self.gram[np.triu_indices(np.shape(self.gram)[0], 1)])
+        angles = \
+            np.unique(self.gram[np.triu_indices(np.shape(self.gram)[0], 1)])
         return angles
 
     def incidence_matrices(self, only_incidence=True, zip_angles=False):
