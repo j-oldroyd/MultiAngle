@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.typing as npt
 from numpy import linalg as LA
 
 import networkx as nx
@@ -27,7 +26,7 @@ def get_synthesis(G, tol=1e-6):
     Arguments:
 
         G: An $n\times n$ positive semi-definite matrix of rank $d$
-        represented as an ndarray.
+          represented as an ndarray.
 
         tol: A tolerance setting for rounding eigenvalues to zero.
 
@@ -75,7 +74,7 @@ class MultiAngle:
         Keyword arguments:
 
             synthesis_mat: boolean. Use synthesis matrix instead of a
-            Gram matrix.
+              Gram matrix.
 
         """
         if mat is None:
@@ -99,43 +98,53 @@ class MultiAngle:
         self.frame_bounds = []
         self.max_coherence = np.abs(np.triu(self.gram, k=1)).max()
 
-    def get_angles(self):
-        """Get list of angles from MultiAngle object."""
+    def get_angles(self, precision=3):
+        r"""Get list of angles from MultiAngle object.
 
-        angles = \
-            np.unique(self.gram[np.triu_indices(np.shape(self.gram)[0], 1)])
+        Return the unique values of the inner products that appear in
+        the Gram matrix of the frame (the "angles").  The values are
+        by default rounded to three decimal places.
+
+        Keyword arguments:
+
+            precision: An integer representing the number of places to
+              round the entries of the Gram matrix to.
+        """
+        gram_rounded = np.round(self.gram, decimals=precision)
+
+        angles = np.unique(gram_rounded)
         return angles
 
     def incidence_matrices(self, only_incidence=True, zip_angles=False):
-        """Return incidence matrices associated with angles of a frame.
+        r"""Return incidence matrices associated with angles of a frame.
 
         Keyword arguments:
-        only_incidence: boolean. Include only incidence matrices.
-        zip_angles: boolean. Zip angles with incidence matrices.
+
+            only_incidence: A boolean indicating whether or not to
+              include only the incidence matrices or the relevant
+              entries of the Gram matrix.
+
+            zip_angles: A boolean indicating whether or not to zip the
+              angles with their corresponding incidence matrices.
+
         """
         angles = self.get_angles()
         num_angles = angles.size
         angle_mats = np.zeros((num_angles, self.num_vectors, self.num_vectors))
 
         if only_incidence:
-            # We only care about the incidence matrices, not the angles
-            # themselves.
             for idx, angle in enumerate(angles):
-                # Produce incidence matrices associated to each angle
                 angle_mat = np.where(self.gram == angle, 1, 0)
                 np.fill_diagonal(angle_mat, 0)
                 angle_mats[idx, :, :] = angle_mat
-            # If zip_angles is true, we zip angles with their corresponding
-            # incidence matrices.
+
             if zip_angles:
                 # We set strict=True since the length of angles and angle_mats
                 # should be the same. Therefore, we want an error if this is
                 # not the case.
                 angle_mats = zip(angles, angle_mats, strict=True)
-        elif not only_incidence:
-            # Now we include the angles as well.
+        else:
             for idx, angle in enumerate(angles):
-                # Produce matrices associated to each angle
                 angle_mat = np.where(self.gram == angle, self.gram, 0)
                 np.fill_diagonal(angle_mat, 0)
                 angle_mats[idx, :, :] = angle_mat
@@ -175,14 +184,48 @@ class MultiAngle:
                 nx.draw_circular(graph, ax=ax[idx],
                                  edge_color=colors[idx % 10], node_size=125,
                                  with_labels=True)
+
             for idx in range(n_graphs, n_rows * n_cols):
                 # Fill in empty subplots with empty graphs.
                 nx.draw_circular(nx.empty_graph(0), ax=ax[idx])
 
         plt.show()
 
-    def __str__(self):
-        return f'A frame of {self.num_vectors} vectors in R^{self.dim}.'
+    def __str__(self, scientific=False, N=3):
+        """Return string representation of frame matrix.
+
+        Be default this will return a MATLAB-esque representation of
+        self.matrix.
+
+        Keyword arguments:
+
+            scientific: A boolean that determines whether or not
+              scientific notation is used in the string output.
+
+            N: An integer that represents the power used in the
+              scientific notation representation.
+
+        Resources
+
+        ---------
+
+        https://www.reddit.com/r/Numpy/comments/16pb8uo/prettyprint_array_matlabstyle/.
+
+        """
+        if not scientific:
+            np.set_printoptions(formatter={'float': lambda x: f"{x:10.4g}"})
+            matrix_str = f"{self.matrix=}".split("=")[0] + "=\n" \
+                + self.matrix.__str__()
+        else:
+            np.set_printoptions(formatter={'float': lambda x: (
+                f"{x:10.0f}" if abs(x) < 1e-4 else f"{x:10,.0f}")})
+            matrix_str = f"{self.matrix=}".split("=")[0] + f"= 1e{N}*\n" \
+                + (self.matrix/10**N).__str__()
+
+        print(matrix_str)
+        np.set_printoptions()
+
+        return matrix_str
 
     def __repr__(self):
-        return f'MultiAngle({repr(self.matrix)}, synthesis_mat={self.kwds})'
+        return f'MultiAngle(np.{repr(self.matrix)}, synthesis_mat={self.kwds})'
