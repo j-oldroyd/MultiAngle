@@ -1,8 +1,6 @@
 import numpy as np
 from numpy import linalg as LA
-
 import networkx as nx
-
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
@@ -13,7 +11,7 @@ def mb_etf(d):
     return get_synthesis(G)
 
 
-def get_synthesis(G, tol=1e-6):
+def get_synthesis(gram_mat, tol=1e-6):
     r"""Convert a Gram matrix to synthesis matrix.
 
     Given a Gram matrix $G$, this function returns a corresponding
@@ -36,28 +34,29 @@ def get_synthesis(G, tol=1e-6):
         represented as an ndarray.
 
     """
-    if type(G) is not np.ndarray:
+    if type(gram_mat) is not np.ndarray:
         try:
-            G = np.array(G, dtype=float)
+            gram_mat = np.array(gram_mat, dtype=float)
         except ValueError:
-            print("G must be a NumPy array or an array-like of floats.")
+            print("Input must be a NumPy array or an array-like of "
+                  "floats.")
             raise
 
-    if G.shape[0] is not G.shape[1]:
+    if gram_mat.shape[0] is not gram_mat.shape[1]:
         raise ValueError("G must be a square array.")
 
-    N = G.shape[0]
-    d = LA.matrix_rank(G)
+    frame_size = gram_mat.shape[0]
+    frame_dim = LA.matrix_rank(gram_mat)
 
-    D, U = LA.eigh(G)
-    D[np.abs(D) < tol] = 0
-    if np.min(D) < 0:
+    eig_vals, eig_vecs = LA.eigh(gram_mat)
+    eig_vals[np.abs(eig_vals) < tol] = 0
+    if np.min(eig_vals) < 0:
         raise ValueError("G must be positive semi-definite.")
 
-    D = np.diag(D)
-    F = U @ np.sqrt(D)
+    eig_vals = np.diag(eig_vals)
+    F = eig_vecs @ np.sqrt(eig_vals)
 
-    return F[:, (N-d):].T
+    return F[:, (frame_size-frame_dim):].T
 
 
 class MultiAngle:
