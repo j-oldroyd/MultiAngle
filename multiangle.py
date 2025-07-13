@@ -78,10 +78,12 @@ class MultiAngle:
         """
         if mat is None:
             mat = 3/2 * np.eye(3) - 1/2 * np.ones(3)
+        elif type(mat) is int and mat > 0:
+            d = mat
+            mat = (d+1)/d * np.eye(d+1) - (1/d) * np.ones(d+1)
 
         self.matrix = mat
         self.kwds = synthesis_mat
-
         self.num_vectors = mat.shape[1]
         self.dim = LA.matrix_rank(mat)
 
@@ -92,7 +94,7 @@ class MultiAngle:
             self.synthesis_matrix = mat
             self.gram = self.synthesis_matrix.T @ self.synthesis_matrix
 
-        self.analysis = self.synthesis_matrix.T
+        self.analysis_matrix = self.synthesis_matrix.T
         self.frame_matrix = self.synthesis_matrix @ self.synthesis_matrix.T
         self.frame_bounds = []
         self.max_coherence = np.abs(np.triu(self.gram, k=1)).max()
