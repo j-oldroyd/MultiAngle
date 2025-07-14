@@ -7,7 +7,7 @@ import matplotlib.colors as mcolors
 
 def mb_etf(d):
     """Construct the (N, d) Mercedes-Benz ETF."""
-    G = (d + 1)/d * np.eye(d + 1) - (1/d) * np.ones(d + 1)
+    G = (d + 1) / d * np.eye(d + 1) - (1 / d) * np.ones(d + 1)
     return get_synthesis(G)
 
 
@@ -38,8 +38,7 @@ def get_synthesis(gram_mat, tol=1e-6):
         try:
             gram_mat = np.array(gram_mat, dtype=float)
         except ValueError:
-            print("Input must be a NumPy array or an array-like of "
-                  "floats.")
+            print("Input must be a NumPy array or an array-like of floats.")
             raise
 
     if gram_mat.shape[0] is not gram_mat.shape[1]:
@@ -56,7 +55,7 @@ def get_synthesis(gram_mat, tol=1e-6):
     eig_vals = np.diag(eig_vals)
     F = eig_vecs @ np.sqrt(eig_vals)
 
-    return F[:, (frame_size-frame_dim):].T
+    return F[:, (frame_size - frame_dim) :].T
 
 
 class MultiAngle:
@@ -77,10 +76,10 @@ class MultiAngle:
 
         """
         if mat is None:
-            mat = 3/2 * np.eye(3) - 1/2 * np.ones(3)
+            mat = 3 / 2 * np.eye(3) - 1 / 2 * np.ones(3)
         elif type(mat) is int and mat > 0:
             d = mat
-            mat = (d+1)/d * np.eye(d+1) - (1/d) * np.ones(d+1)
+            mat = (d + 1) / d * np.eye(d + 1) - (1 / d) * np.ones(d + 1)
 
         self.matrix = mat
         self.kwds = synthesis_mat
@@ -167,8 +166,9 @@ class MultiAngle:
         colors = list(mcolors.TABLEAU_COLORS)
         if single_plot:
             for idx, graph in enumerate(graphs):
-                nx.draw_circular(graph, edge_color=colors[idx % 10],
-                                 node_size=125, with_labels=True)
+                nx.draw_circular(
+                    graph, edge_color=colors[idx % 10], node_size=125, with_labels=True
+                )
         else:
             # We want to create a subplot that minimizes the number of blank
             # entries in a row
@@ -182,9 +182,13 @@ class MultiAngle:
             ax = axes.flat
             colors = list(mcolors.TABLEAU_COLORS)
             for idx, graph in enumerate(graphs):
-                nx.draw_circular(graph, ax=ax[idx],
-                                 edge_color=colors[idx % 10], node_size=125,
-                                 with_labels=True)
+                nx.draw_circular(
+                    graph,
+                    ax=ax[idx],
+                    edge_color=colors[idx % 10],
+                    node_size=125,
+                    with_labels=True,
+                )
 
             for idx in range(n_graphs, n_rows * n_cols):
                 # Fill in empty subplots with empty graphs.
@@ -214,19 +218,25 @@ class MultiAngle:
 
         """
         if not scientific:
-            np.set_printoptions(formatter={'float': lambda x: f"{x:10.4g}"})
-            matrix_str = f"{self.matrix=}".split("=")[0] + "=\n" \
-                + self.matrix.__str__()
+            np.set_printoptions(formatter={"float": lambda x: f"{x:10.4g}"})
+            matrix_str = f"{self.matrix=}".split("=")[0] + "=\n" + self.matrix.__str__()
         else:
-            np.set_printoptions(formatter={'float': lambda x: (
-                f"{x:10.0f}" if abs(x) < 1e-4 else f"{x:10,.0f}")})
-            matrix_str = f"{self.matrix=}".split("=")[0] + f"= 1e{N}*\n" \
-                + (self.matrix/10**N).__str__()
+            np.set_printoptions(
+                formatter={
+                    "float": lambda x: (
+                        f"{x:10.0f}" if abs(x) < 1e-4 else f"{x:10,.0f}"
+                    )
+                }
+            )
+            matrix_str = (
+                f"{self.matrix=}".split("=")[0]
+                + f"= 1e{N}*\n"
+                + (self.matrix / 10**N).__str__()
+            )
 
-        print(matrix_str)
         np.set_printoptions()
 
         return matrix_str
 
     def __repr__(self):
-        return f'MultiAngle(np.{repr(self.matrix)}, synthesis_mat={self.kwds})'
+        return f"MultiAngle(np.{repr(self.matrix)}, synthesis_mat={self.kwds})"
